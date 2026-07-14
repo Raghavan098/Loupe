@@ -1,0 +1,19 @@
+# Node
+node_modules/
+dist/
+dist-ssr/
+
+# Rust / Tauri build output (Cargo.lock IS committed — Tauri ships a binary app)
+src-tauri/target/
+
+# macOS
+.DS_Store
+
+# Editors
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# Secrets
+.env
+.env.local
