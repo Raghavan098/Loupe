@@ -1,14 +1,27 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import "./App.css";
 import { Toolbar } from "./components/Toolbar/Toolbar";
 import { PdfViewer } from "./components/PdfViewer/PdfViewer";
+import { ChatPanel } from "./components/Chat/ChatPanel";
+import { SettingsModal } from "./components/Settings/SettingsModal";
+import { SelectionToolbar } from "./components/SelectionToolbar/SelectionToolbar";
 import { usePdfDocument } from "./hooks/usePdfDocument";
+import { useSettings } from "./hooks/useSettings";
+import { useChatPanel } from "./hooks/useChatPanel";
+import { useSelectionToolbar } from "./hooks/useSelectionToolbar";
 
 const DEFAULT_SCALE = 1.25;
 
 function App() {
   const { doc, fileName, numPages, version, loading, error, openPath } = usePdfDocument();
   const [scale, setScale] = useState(DEFAULT_SCALE);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+
+  const settings = useSettings();
+  const chat = useChatPanel(settings.activeProvider, settings.model);
+
+  const viewerRef = useRef<HTMLDivElement>(null);
+  const toolbar = useSelectionToolbar(viewerRef);
 
   return (
     <div className="app">
@@ -17,17 +30,32 @@ function App() {
         scale={scale}
         onOpenPath={openPath}
         onScaleChange={setScale}
+        onOpenSettings={() => setSettingsOpen(true)}
+        onToggleChat={() => chat.setOpen((o) => !o)}
       />
-      <div className="viewer-container">
-        {error && <p className="viewer-message viewer-error">{error}</p>}
-        {loading && <p className="viewer-message">Loading…</p>}
-        {!loading && !error && doc && (
-          <PdfViewer key={version} doc={doc} numPages={numPages} scale={scale} />
-        )}
-        {!loading && !error && !doc && (
-          <p className="viewer-message">Open a PDF to get started.</p>
-        )}
+      <div className="body-layout">
+        <div className="viewer-container" ref={viewerRef}>
+          {error && <p className="viewer-message viewer-error">{error}</p>}
+          {loading && <p className="viewer-message">Loading…</p>}
+          {!loading && !error && doc && (
+            <PdfViewer key={version} doc={doc} numPages={numPages} scale={scale} />
+          )}
+          {!loading && !error && !doc && (
+            <p className="viewer-message">Open a PDF to get started.</p>
+          )}
+        </div>
+        {chat.open && <ChatPanel chat={chat} />}
       </div>
+      {toolbar && (
+        <SelectionToolbar
+          {...toolbar}
+          onInsert={() => chat.insertText(toolbar.text)}
+          onExplain={() => chat.explain(toolbar.text)}
+        />
+      )}
+      {settingsOpen && (
+        <SettingsModal settings={settings} onClose={() => setSettingsOpen(false)} />
+      )}
     </div>
   );
 }

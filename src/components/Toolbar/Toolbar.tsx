@@ -6,13 +6,22 @@ interface ToolbarProps {
   scale: number;
   onOpenPath: (path: string) => void;
   onScaleChange: (scale: number) => void;
+  onOpenSettings: () => void;
+  onToggleChat: () => void;
 }
 
 const MIN_SCALE = 0.5;
 const MAX_SCALE = 3;
 const SCALE_STEP = 0.25;
 
-export function Toolbar({ fileName, scale, onOpenPath, onScaleChange }: ToolbarProps) {
+export function Toolbar({
+  fileName,
+  scale,
+  onOpenPath,
+  onScaleChange,
+  onOpenSettings,
+  onToggleChat,
+}: ToolbarProps) {
   const [opening, setOpening] = useState(false);
 
   async function handleOpen() {
@@ -46,6 +55,8 @@ export function Toolbar({ fileName, scale, onOpenPath, onScaleChange }: ToolbarP
           +
         </button>
       </div>
+      <button onClick={onToggleChat}>Chat</button>
+      <button onClick={onOpenSettings}>Settings</button>
     </div>
   );
 }
