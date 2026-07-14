@@ -104,6 +104,38 @@ button:disabled {
   gap: 16px;
 }
 
+/* Give the canvas wrapper its own containing block for the absolutely-
+   positioned canvas child. */
+.canvasWrapper {
+  position: relative;
+  z-index: 1;
+}
+
+/* The canvas is purely visual — disable pointer events so all mouse
+   interaction falls through to the text layer on top. */
+.canvasWrapper canvas {
+  pointer-events: none;
+  display: block;
+}
+
+/* Text layer must sit above the canvas and be fully interactive.
+   pdfjs sets z-index:0 on it; we raise it above the canvas wrapper. */
+.pdfViewer .page .textLayer {
+  z-index: 2;
+  pointer-events: auto;
+  -webkit-user-select: text;
+  user-select: text;
+  cursor: text;
+}
+
+/* Explicitly allow selection on every text span — override any inherited
+   user-select:none from the OS WebView or ancestor elements. */
+.pdfViewer .page .textLayer :is(span, br) {
+  -webkit-user-select: text;
+  user-select: text;
+  pointer-events: auto;
+}
+
 .viewer-message {
   margin-top: 3em;
   text-align: center;
