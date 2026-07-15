@@ -6,14 +6,16 @@ PDFs never leave your disk — no upload to any third-party server. Bring your o
 
 ## Status
 
-Early development. Currently: PDF rendering foundation (load a PDF, render via PDF.js, selectable text layer), a Settings screen for saving a per-provider API key, and a streaming chat panel — select text in the document and choose "Insert into chat" or "Explain" to get an LLM response. There's also screenshot-to-explain: toggle "Screenshot" in the toolbar, drag a box over any region of the page (a figure, diagram, equation), and add the capture to the chat as an image attachment sent to a vision-capable model. Dark mode and local persistence are being built next, one at a time.
+Early development. Currently: PDF rendering foundation (load a PDF, render via PDF.js, selectable text layer), a Settings screen for saving a per-provider API key, and a streaming chat panel — select text in the document and choose "Insert into chat" or "Explain" to get an LLM response. There's also screenshot-to-explain: toggle "Screenshot" in the toolbar, drag a box over any region of the page (a figure, diagram, equation), and add the capture to the chat as an image attachment sent to a vision-capable model.
+
+The chat panel supports multiple named conversations per PDF: use the "+" icon to start a new one, or the history icon to browse and resume earlier ones for the currently open document. Titles are generated automatically by the LLM after each conversation's first exchange. Conversations are scoped to the open PDF's file path but currently held in memory only — they're lost when the app restarts. Persisting them (and dark mode) are being built next, one at a time.
 
 ## Tech stack
 
 - **Shell**: Tauri v2, Rust backend
 - **Frontend**: React + TypeScript, Vite
 - **PDF rendering**: PDF.js (`pdfjs-dist`)
-- **Local storage**: SQLite, per-document highlights/explanations/notes
+- **Local storage**: planned — SQLite, per-document highlights/explanations/notes, and persisted chat conversations
 - **API keys**: stored via the OS keychain (Rust `keyring` crate), one entry per provider, never returned to the webview
 - **LLM calls**: made only from the Rust backend (Anthropic, OpenAI, Google/Gemini), streamed to the frontend via a Tauri IPC channel
 
