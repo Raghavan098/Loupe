@@ -11,6 +11,22 @@ fn gemini_role(role: &str) -> &'static str {
     }
 }
 
+/// Builds the `parts` array for one message: a text part when `content` is
+/// non-empty, plus an inline-data image part when an image is attached.
+/// Gemini's `inline_data.data` wants a bare base64 string (no `data:` prefix).
+fn build_parts(m: &ChatMessage) -> Vec<Value> {
+    let mut parts = Vec::new();
+    if !m.content.is_empty() {
+        parts.push(serde_json::json!({ "text": m.content }));
+    }
+    if let Some(image) = &m.image {
+        parts.push(serde_json::json!({
+            "inline_data": { "mime_type": image.mime_type, "data": image.data },
+        }));
+    }
+    parts
+}
+
 /// Streams a chat completion from the Gemini `streamGenerateContent` API,
 /// forwarding each `candidates[0].content.parts[0].text` chunk as a
 /// `ChatStreamEvent::Delta`.
@@ -27,7 +43,7 @@ pub async fn stream(
     let body = serde_json::json!({
         "contents": messages.iter().map(|m| serde_json::json!({
             "role": gemini_role(&m.role),
-            "parts": [{ "text": m.content }],
+            "parts": build_parts(m),
         })).collect::<Vec<_>>(),
     });
 
@@ -92,5 +108,50 @@ mod tests {
     fn maps_assistant_role_to_model() {
         assert_eq!(gemini_role("assistant"), "model");
         assert_eq!(gemini_role("user"), "user");
+    }
+
+    #[test]
+    fn build_parts_text_only() {
+        let m = ChatMessage {
+            role: "user".to_string(),
+            content: "hello".to_string(),
+            image: None,
+        };
+        assert_eq!(build_parts(&m), vec![serde_json::json!({ "text": "hello" })]);
+    }
+
+    #[test]
+    fn build_parts_with_image_uses_bare_base64() {
+        let m = ChatMessage {
+            role: "user".to_string(),
+            content: "what is this?".to_string(),
+            image: Some(super::super::ChatImage {
+                mime_type: "image/png".to_string(),
+                data: "AAAA".to_string(),
+            }),
+        };
+        assert_eq!(
+            build_parts(&m),
+            vec![
+                serde_json::json!({ "text": "what is this?" }),
+                serde_json::json!({ "inline_data": { "mime_type": "image/png", "data": "AAAA" } }),
+            ]
+        );
+    }
+
+    #[test]
+    fn build_parts_image_only_omits_text_part() {
+        let m = ChatMessage {
+            role: "user".to_string(),
+            content: "".to_string(),
+            image: Some(super::super::ChatImage {
+                mime_type: "image/png".to_string(),
+                data: "AAAA".to_string(),
+            }),
+        };
+        assert_eq!(
+            build_parts(&m),
+            vec![serde_json::json!({ "inline_data": { "mime_type": "image/png", "data": "AAAA" } })]
+        );
     }
 }

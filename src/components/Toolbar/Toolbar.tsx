@@ -8,6 +8,8 @@ interface ToolbarProps {
   onScaleChange: (scale: number) => void;
   onOpenSettings: () => void;
   onToggleChat: () => void;
+  screenshotMode: boolean;
+  onToggleScreenshotMode: () => void;
 }
 
 const MIN_SCALE = 0.5;
@@ -21,6 +23,8 @@ export function Toolbar({
   onScaleChange,
   onOpenSettings,
   onToggleChat,
+  screenshotMode,
+  onToggleScreenshotMode,
 }: ToolbarProps) {
   const [opening, setOpening] = useState(false);
 
@@ -55,6 +59,14 @@ export function Toolbar({
           +
         </button>
       </div>
+      <button
+        className={screenshotMode ? "toolbar-toggle active" : "toolbar-toggle"}
+        aria-pressed={screenshotMode}
+        title="Drag a box over the document to capture a screenshot"
+        onClick={onToggleScreenshotMode}
+      >
+        Screenshot
+      </button>
       <button onClick={onToggleChat}>Chat</button>
       <button onClick={onOpenSettings}>Settings</button>
     </div>

@@ -6,7 +6,7 @@ PDFs never leave your disk — no upload to any third-party server. Bring your o
 
 ## Status
 
-Early development. Currently: PDF rendering foundation (load a PDF, render via PDF.js, selectable text layer), a Settings screen for saving a per-provider API key, and a streaming chat panel — select text in the document and choose "Insert into chat" or "Explain" to get an LLM response. Dark mode, screenshot-to-explain, and local persistence are being built next, one at a time.
+Early development. Currently: PDF rendering foundation (load a PDF, render via PDF.js, selectable text layer), a Settings screen for saving a per-provider API key, and a streaming chat panel — select text in the document and choose "Insert into chat" or "Explain" to get an LLM response. There's also screenshot-to-explain: toggle "Screenshot" in the toolbar, drag a box over any region of the page (a figure, diagram, equation), and add the capture to the chat as an image attachment sent to a vision-capable model. Dark mode and local persistence are being built next, one at a time.
 
 ## Tech stack
 

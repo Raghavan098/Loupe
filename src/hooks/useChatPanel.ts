@@ -9,10 +9,16 @@ const EXPLAIN_PROMPT_TEMPLATE = (selectedText: string) =>
   `Explain the following passage from the document in plain, accessible language. ` +
   `Keep the explanation concise unless the passage requires more detail to make sense.\n\n"""\n${selectedText}\n"""`;
 
+interface PendingImage {
+  dataUrl: string;
+  mimeType: string;
+}
+
 export function useChatPanel(provider: Provider, model: string) {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draft, setDraft] = useState("");
+  const [pendingImage, setPendingImage] = useState<PendingImage | null>(null);
   const [streaming, setStreaming] = useState(false);
 
   // Mirrors `messages` so `send` can read the latest history synchronously
@@ -21,11 +27,17 @@ export function useChatPanel(provider: Provider, model: string) {
   messagesRef.current = messages;
 
   const send = useCallback(
-    async (text: string) => {
+    async (text: string, image?: PendingImage | null) => {
       const trimmed = text.trim();
-      if (!trimmed || streaming) return;
+      if ((!trimmed && !image) || streaming) return;
 
-      const userMessage: ChatMessage = { role: "user", content: trimmed };
+      const userMessage: ChatMessage = {
+        role: "user",
+        content: trimmed,
+        // The staged image is a full data: URL (what <img src> needs); the
+        // wire format is bare base64, so strip the prefix only here.
+        ...(image ? { image: { mimeType: image.mimeType, data: image.dataUrl.split(",")[1] } } : {}),
+      };
       const historyToSend = [...messagesRef.current, userMessage];
 
       setMessages((m) => [...m, userMessage, { role: "assistant", content: "" }]);
@@ -76,11 +88,20 @@ export function useChatPanel(provider: Provider, model: string) {
     [send],
   );
 
+  const attachImage = useCallback((dataUrl: string, mimeType = "image/png") => {
+    setPendingImage({ dataUrl, mimeType });
+    setOpen(true);
+  }, []);
+
+  const clearPendingImage = useCallback(() => setPendingImage(null), []);
+
   const sendDraft = useCallback(() => {
     const text = draft;
+    const image = pendingImage;
     setDraft("");
-    void send(text);
-  }, [draft, send]);
+    setPendingImage(null);
+    void send(text, image);
+  }, [draft, pendingImage, send]);
 
   return {
     open,
@@ -88,6 +109,9 @@ export function useChatPanel(provider: Provider, model: string) {
     messages,
     draft,
     setDraft,
+    pendingImage,
+    attachImage,
+    clearPendingImage,
     streaming,
     insertText,
     explain,

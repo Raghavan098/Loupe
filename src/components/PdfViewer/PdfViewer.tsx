@@ -6,9 +6,11 @@ interface PdfViewerProps {
   doc: PDFDocumentProxy;
   numPages: number;
   scale: number;
+  screenshotMode: boolean;
+  onCapture: (dataUrl: string, pos: { top: number; left: number }) => void;
 }
 
-export function PdfViewer({ doc, numPages, scale }: PdfViewerProps) {
+export function PdfViewer({ doc, numPages, scale, screenshotMode, onCapture }: PdfViewerProps) {
   const pageNumbers = Array.from({ length: numPages }, (_, i) => i + 1);
 
   // pdf.js layer CSS derives all its sizing from --scale-factor; set it
@@ -18,7 +20,14 @@ export function PdfViewer({ doc, numPages, scale }: PdfViewerProps) {
   return (
     <div className="pdfViewer" style={style}>
       {pageNumbers.map((pageNumber) => (
-        <PdfPage key={pageNumber} doc={doc} pageNumber={pageNumber} scale={scale} />
+        <PdfPage
+          key={pageNumber}
+          doc={doc}
+          pageNumber={pageNumber}
+          scale={scale}
+          screenshotMode={screenshotMode}
+          onCapture={onCapture}
+        />
       ))}
     </div>
   );

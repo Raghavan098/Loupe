@@ -18,10 +18,24 @@ pub enum ChatStreamEvent {
     Error { message: String },
 }
 
+/// A base64-encoded image attached to a chat message (e.g. a PDF-page
+/// screenshot). Keep this in sync with `ChatImage` in
+/// `src/services/tauri/commands.ts`.
+#[derive(Debug, Clone, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ChatImage {
+    pub mime_type: String,
+    /// Base64-encoded image bytes, without a `data:` URL prefix.
+    pub data: String,
+}
+
+/// Keep this in sync with `ChatMessage` in `src/services/tauri/commands.ts`.
 #[derive(Debug, Clone, Deserialize)]
 pub struct ChatMessage {
     pub role: String,
     pub content: String,
+    #[serde(default)]
+    pub image: Option<ChatImage>,
 }
 
 /// Looks up the active provider's key, dispatches to its streaming

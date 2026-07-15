@@ -23,9 +23,16 @@ export async function hasApiKey(provider: Provider): Promise<boolean> {
   return invoke<boolean>("has_api_key", { provider });
 }
 
+export interface ChatImage {
+  mimeType: string;
+  /** Base64-encoded image bytes, without a `data:` URL prefix. */
+  data: string;
+}
+
 export interface ChatMessage {
   role: "user" | "assistant";
   content: string;
+  image?: ChatImage;
 }
 
 export type ChatStreamEvent =

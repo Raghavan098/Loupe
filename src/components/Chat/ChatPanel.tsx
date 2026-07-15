@@ -27,6 +27,8 @@ export function ChatPanel({ chat }: ChatPanelProps) {
         onDraftChange={chat.setDraft}
         onSend={chat.sendDraft}
         disabled={chat.streaming}
+        pendingImage={chat.pendingImage}
+        onRemoveImage={chat.clearPendingImage}
       />
     </div>
   );

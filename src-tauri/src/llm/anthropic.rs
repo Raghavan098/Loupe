@@ -2,6 +2,29 @@ use super::{sse, ChatMessage, ChatStreamEvent};
 use serde_json::Value;
 use tauri::ipc::Channel;
 
+/// Builds the `content` field for one message: a plain string when there's no
+/// image, or an array of content blocks (text + image) when there is.
+/// Anthropic's image blocks take a bare base64 string (no `data:` prefix).
+fn build_content(m: &ChatMessage) -> Value {
+    let Some(image) = &m.image else {
+        return Value::String(m.content.clone());
+    };
+
+    let mut blocks = Vec::new();
+    if !m.content.is_empty() {
+        blocks.push(serde_json::json!({ "type": "text", "text": m.content }));
+    }
+    blocks.push(serde_json::json!({
+        "type": "image",
+        "source": {
+            "type": "base64",
+            "media_type": image.mime_type,
+            "data": image.data,
+        },
+    }));
+    Value::Array(blocks)
+}
+
 const API_URL: &str = "https://api.anthropic.com/v1/messages";
 const ANTHROPIC_VERSION: &str = "2023-06-01";
 const MAX_TOKENS: u32 = 4096;
@@ -20,7 +43,7 @@ pub async fn stream(
         "stream": true,
         "messages": messages.iter().map(|m| serde_json::json!({
             "role": m.role,
-            "content": m.content,
+            "content": build_content(m),
         })).collect::<Vec<_>>(),
     });
 
@@ -86,5 +109,52 @@ mod tests {
         ] {
             assert_eq!(extract_delta(&value), None);
         }
+    }
+
+    #[test]
+    fn build_content_plain_string_when_no_image() {
+        let m = ChatMessage {
+            role: "user".to_string(),
+            content: "hello".to_string(),
+            image: None,
+        };
+        assert_eq!(build_content(&m), Value::String("hello".to_string()));
+    }
+
+    #[test]
+    fn build_content_with_image_and_text() {
+        let m = ChatMessage {
+            role: "user".to_string(),
+            content: "what is this?".to_string(),
+            image: Some(super::super::ChatImage {
+                mime_type: "image/png".to_string(),
+                data: "AAAA".to_string(),
+            }),
+        };
+        assert_eq!(
+            build_content(&m),
+            serde_json::json!([
+                { "type": "text", "text": "what is this?" },
+                { "type": "image", "source": { "type": "base64", "media_type": "image/png", "data": "AAAA" } },
+            ])
+        );
+    }
+
+    #[test]
+    fn build_content_image_only_omits_text_block() {
+        let m = ChatMessage {
+            role: "user".to_string(),
+            content: "".to_string(),
+            image: Some(super::super::ChatImage {
+                mime_type: "image/png".to_string(),
+                data: "AAAA".to_string(),
+            }),
+        };
+        assert_eq!(
+            build_content(&m),
+            serde_json::json!([
+                { "type": "image", "source": { "type": "base64", "media_type": "image/png", "data": "AAAA" } },
+            ])
+        );
     }
 }

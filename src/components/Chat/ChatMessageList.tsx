@@ -13,7 +13,17 @@ export function ChatMessageList({ messages }: ChatMessageListProps) {
     <div className="chat-message-list">
       {messages.map((message, i) => (
         <div key={i} className={`chat-message chat-message-${message.role}`}>
-          <div className="chat-message-bubble">{message.content || "…"}</div>
+          <div className="chat-message-bubble">
+            {message.image && (
+              <img
+                className="chat-message-image"
+                src={`data:${message.image.mimeType};base64,${message.image.data}`}
+                alt="Screenshot"
+              />
+            )}
+            {message.content && <div>{message.content}</div>}
+            {!message.image && !message.content && "…"}
+          </div>
         </div>
       ))}
     </div>
