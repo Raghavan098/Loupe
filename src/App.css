@@ -198,6 +198,108 @@ button:disabled {
   margin: 0;
 }
 
+.chat-panel-heading {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6em;
+  min-width: 0;
+}
+
+.chat-panel-subtitle {
+  font-size: 0.8em;
+  color: #777;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chat-panel-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.2em;
+  flex-shrink: 0;
+}
+
+.chat-history-anchor {
+  position: relative;
+}
+
+.chat-history-button {
+  background: none;
+  border: none;
+  box-shadow: none;
+  font-size: 1em;
+  line-height: 1;
+  padding: 0.2em 0.4em;
+}
+
+.conversation-history-popover {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 0.3em;
+  width: 240px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3em;
+  background-color: #ffffff;
+  border: 1px solid #d8d8d8;
+  border-radius: 8px;
+  padding: 0.4em;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  z-index: 10;
+}
+
+.conversation-history-empty {
+  color: #777;
+  font-size: 0.85em;
+  padding: 0.4em 0.5em;
+  margin: 0;
+}
+
+.conversation-history-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.conversation-history-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.1em;
+  width: 100%;
+  text-align: left;
+  padding: 0.4em 0.5em;
+  font-size: 0.85em;
+  box-shadow: none;
+  background-color: transparent;
+  border: none;
+  border-radius: 6px;
+}
+
+.conversation-history-item:hover {
+  background-color: #f0f0f0;
+}
+
+.conversation-history-item.active {
+  background-color: #e8edfb;
+}
+
+.conversation-history-item-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.conversation-history-item-time {
+  font-size: 0.85em;
+  color: #999;
+}
+
 .chat-panel-body {
   flex: 1;
   overflow-y: auto;
@@ -482,9 +584,38 @@ button:disabled {
   }
 
   .selection-toolbar,
-  .screenshot-popup {
+  .screenshot-popup,
+  .conversation-history-popover {
     background-color: #1e1e1e;
     border-color: #3a3a3a;
+  }
+
+  .chat-panel-subtitle {
+    color: #999;
+  }
+
+  .chat-history-button {
+    color: #f6f6f6;
+  }
+
+  .conversation-history-empty {
+    color: #999;
+  }
+
+  .conversation-history-item {
+    color: #f6f6f6;
+  }
+
+  .conversation-history-item:hover {
+    background-color: #2a2a2a;
+  }
+
+  .conversation-history-item.active {
+    background-color: #33436e;
+  }
+
+  .conversation-history-item-time {
+    color: #999;
   }
 
   .toolbar-toggle.active {

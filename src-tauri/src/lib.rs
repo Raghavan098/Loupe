@@ -13,6 +13,7 @@ pub fn run() {
             commands::settings::delete_api_key,
             commands::settings::has_api_key,
             commands::chat::send_chat_message,
+            commands::chat::generate_conversation_title,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

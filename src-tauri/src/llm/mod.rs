@@ -5,6 +5,7 @@ mod sse;
 
 use crate::settings::{self, Provider};
 use serde::{Deserialize, Serialize};
+use std::sync::Mutex;
 use tauri::ipc::Channel;
 
 /// Normalized streaming event sent to the frontend, regardless of which
@@ -16,6 +17,39 @@ pub enum ChatStreamEvent {
     Delta { text: String },
     Done,
     Error { message: String },
+}
+
+/// Abstracts "where streamed events go" so provider `stream()` implementations
+/// don't have to be hardwired to a Tauri IPC `Channel` — lets non-streaming
+/// one-shot calls (like title generation) reuse the exact same HTTP/SSE logic
+/// by swapping in an in-memory collector instead.
+pub trait EventSink: Send + Sync {
+    fn send(&self, event: ChatStreamEvent);
+}
+
+impl EventSink for Channel<ChatStreamEvent> {
+    fn send(&self, event: ChatStreamEvent) {
+        let _ = Channel::send(self, event);
+    }
+}
+
+/// Collects `Delta` text in-memory instead of forwarding it over IPC; used for
+/// one-shot, non-streamed calls such as title generation.
+#[derive(Default)]
+pub struct BufferSink(Mutex<String>);
+
+impl EventSink for BufferSink {
+    fn send(&self, event: ChatStreamEvent) {
+        if let ChatStreamEvent::Delta { text } = event {
+            self.0.lock().unwrap().push_str(&text);
+        }
+    }
+}
+
+impl BufferSink {
+    pub fn into_text(self) -> String {
+        self.0.into_inner().unwrap()
+    }
 }
 
 /// A base64-encoded image attached to a chat message (e.g. a PDF-page
@@ -51,29 +85,56 @@ pub async fn stream_chat(
 
     match &result {
         Ok(()) => {
-            let _ = channel.send(ChatStreamEvent::Done);
+            let _ = Channel::send(&channel, ChatStreamEvent::Done);
         }
         Err(message) => {
-            let _ = channel.send(ChatStreamEvent::Error {
-                message: message.clone(),
-            });
+            let _ = Channel::send(
+                &channel,
+                ChatStreamEvent::Error {
+                    message: message.clone(),
+                },
+            );
         }
     }
 
     result
 }
 
+/// Makes a single one-shot (non-streamed) call asking the model to summarize
+/// the first exchange of a conversation into a short title. Reuses the exact
+/// same provider HTTP/SSE logic as `stream_chat` via a `BufferSink` instead of
+/// a real IPC channel.
+pub async fn generate_title(
+    provider: Provider,
+    model: String,
+    first_user_message: String,
+    first_assistant_message: String,
+) -> Result<String, String> {
+    let prompt = format!(
+        "Summarize the following exchange as a short chat title (3-6 words, no quotes, no trailing punctuation):\n\nUser: {first_user_message}\nAssistant: {first_assistant_message}"
+    );
+    let messages = vec![ChatMessage {
+        role: "user".to_string(),
+        content: prompt,
+        image: None,
+    }];
+
+    let sink = BufferSink::default();
+    run(provider, model, messages, &sink).await?;
+    Ok(sink.into_text().trim().to_string())
+}
+
 async fn run(
     provider: Provider,
     model: String,
     messages: Vec<ChatMessage>,
-    channel: &Channel<ChatStreamEvent>,
+    sink: &dyn EventSink,
 ) -> Result<(), String> {
     let api_key = settings::get_key(provider)?;
     match provider {
-        Provider::Anthropic => anthropic::stream(&api_key, &model, &messages, channel).await,
-        Provider::OpenAi => openai::stream(&api_key, &model, &messages, channel).await,
-        Provider::Google => google::stream(&api_key, &model, &messages, channel).await,
+        Provider::Anthropic => anthropic::stream(&api_key, &model, &messages, sink).await,
+        Provider::OpenAi => openai::stream(&api_key, &model, &messages, sink).await,
+        Provider::Google => google::stream(&api_key, &model, &messages, sink).await,
     }
 }
 

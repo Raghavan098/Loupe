@@ -1,6 +1,5 @@
-use super::{sse, ChatMessage, ChatStreamEvent};
+use super::{sse, ChatMessage, ChatStreamEvent, EventSink};
 use serde_json::Value;
-use tauri::ipc::Channel;
 
 /// Gemini uses "model" instead of "assistant" for prior AI turns.
 fn gemini_role(role: &str) -> &'static str {
@@ -34,7 +33,7 @@ pub async fn stream(
     api_key: &str,
     model: &str,
     messages: &[ChatMessage],
-    channel: &Channel<ChatStreamEvent>,
+    sink: &dyn EventSink,
 ) -> Result<(), String> {
     let url = format!(
         "https://generativelanguage.googleapis.com/v1beta/models/{model}:streamGenerateContent?alt=sse"
@@ -63,7 +62,7 @@ pub async fn stream(
             return;
         };
         if let Some(text) = extract_delta(&value) {
-            let _ = channel.send(ChatStreamEvent::Delta { text });
+            sink.send(ChatStreamEvent::Delta { text });
         }
     })
     .await

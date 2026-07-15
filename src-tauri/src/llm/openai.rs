@@ -1,6 +1,5 @@
-use super::{sse, ChatMessage, ChatStreamEvent};
+use super::{sse, ChatMessage, ChatStreamEvent, EventSink};
 use serde_json::Value;
-use tauri::ipc::Channel;
 
 const API_URL: &str = "https://api.openai.com/v1/chat/completions";
 
@@ -33,7 +32,7 @@ pub async fn stream(
     api_key: &str,
     model: &str,
     messages: &[ChatMessage],
-    channel: &Channel<ChatStreamEvent>,
+    sink: &dyn EventSink,
 ) -> Result<(), String> {
     let body = serde_json::json!({
         "model": model,
@@ -63,7 +62,7 @@ pub async fn stream(
             return;
         };
         if let Some(text) = extract_delta(&value) {
-            let _ = channel.send(ChatStreamEvent::Delta { text });
+            sink.send(ChatStreamEvent::Delta { text });
         }
     })
     .await

@@ -50,3 +50,17 @@ export async function sendChatMessage(
   channel.onmessage = onEvent;
   await invoke("send_chat_message", { provider, model, messages, onEvent: channel });
 }
+
+export async function generateConversationTitle(
+  provider: Provider,
+  model: string,
+  firstUserMessage: string,
+  firstAssistantMessage: string,
+): Promise<string> {
+  return invoke("generate_conversation_title", {
+    provider,
+    model,
+    firstUserMessage,
+    firstAssistantMessage,
+  });
+}

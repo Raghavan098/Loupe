@@ -15,12 +15,12 @@ import { useScreenshotCapture } from "./hooks/useScreenshotCapture";
 const DEFAULT_SCALE = 1.25;
 
 function App() {
-  const { doc, fileName, numPages, version, loading, error, openPath } = usePdfDocument();
+  const { doc, fileName, path, numPages, version, loading, error, openPath } = usePdfDocument();
   const [scale, setScale] = useState(DEFAULT_SCALE);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   const settings = useSettings();
-  const chat = useChatPanel(settings.activeProvider, settings.model);
+  const chat = useChatPanel(path, settings.activeProvider, settings.model);
 
   const viewerRef = useRef<HTMLDivElement>(null);
   const toolbar = useSelectionToolbar(viewerRef);
